@@ -20,7 +20,7 @@ ui <- fluidPage(
                                     "S", "V", "MP",
                                     "SD", "FI")),
     width = 2),
-  mainPanel(plotOutput("plot"))
+  mainPanel(plotlyOutput("plot"))
   )
 
 #ui <- fluidPage(

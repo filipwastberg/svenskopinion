@@ -1,15 +1,58 @@
-library(data.table)
-library(plotly)
+# Github Issue
+# Wierd behaviour when assigning colors to data with NA's
 
-dt <- data.table(campaign_week = c(1,2,3,1,2,3), category = c(rep("income",3),rep("cost",3)),
-                 amount = c(100,50,35,-500,-20,-15))
-dt_net <- dt[, .(amount = sum(amount)), by = campaign_week][,.(campaign_week, amount = cumsum(amount))]
+get_polls <- function(){
+  # Get URL
+  x <- RCurl::getURL("https://raw.githubusercontent.com/MansMeg/SwedishPolls/master/Data/Polls.csv")
+  
+  # Read csv
+  df <- utils::read.csv(textConnection(x), stringsAsFactors = FALSE)
+  df$PublYearMonth <- as.Date(paste("01", df$PublYearMonth, sep = " "), format="%d%Y-%b")
+  df$Company <- factor(df$Company)
+  df$PublDate <- lubridate::ymd(df$PublDate)
+  df$collectPeriodFrom <- lubridate::ymd(df$collectPeriodFrom)
+  df$collectPeriodTo <- lubridate::ymd(df$collectPeriodTo)
+  df$house <- factor(df$house)
+  dplyr::as_data_frame(df)
+}
 
-y <- list(title = "Income", tickformat = "$,.0f",hoverformat = "$,.2f") 
+polls <- get_polls() %>%
+  select(PublYearMonth, M:FI, house) %>%
+  gather("parti", value = procent, -PublYearMonth, -house)
 
-plot_ly(dt_net, x = ~campaign_week, y = ~amount, type = "scatter",
-        mode= "lines+markers",
-        line = list(color = "#00AEFF"), name = "Net Income") %>%
-  add_trace(data = dt, x = ~campaign_week, y = ~amount, color = ~category, type = "bar",
-            colors = c("#00ff00", "#ff0000")) %>%
-  layout(yaxis = y, barmode = "relative") 
+# Create data frame with party colors in order to join with data
+partycolors <- data.frame(parti = levels(as.factor(polls$parti)) ,
+                          color = as.factor(c("#009933", "#CD1B68", "#000077",
+                                              "#006AB3", "#52BDEC", "#83CF39",
+                                              "#E8112d", "#DDDD00", "#DA291C")))
+
+# Join data
+polls <- full_join(polls, partycolors, by = c("parti"))
+
+# Plot data
+polls %>%
+  filter(house == "Demoskop") %>%
+  plot_ly(x = ~PublYearMonth,
+          y = ~procent,
+          text = ~paste('Party:', parti,
+                        '<br>Percent:', procent,
+                        '<br>Date:', PublYearMonth),
+          hoverinfo = 'text',
+          mode = "markers",
+          marker = list(color = ~color))
+
+# Filter out NA
+polls <- polls %>%
+  filter(!is.na(procent))
+
+# Plot data
+polls %>%
+  filter(house == "Demoskop") %>%
+  plot_ly(x = ~PublYearMonth,
+          y = ~procent,
+          text = ~paste('Party:', parti,
+                        '<br>Percent:', procent,
+                        '<br>Date:', PublYearMonth),
+          hoverinfo = 'text',
+          mode = "markers",
+          marker = list(color = ~color))

@@ -1,6 +1,10 @@
 # Github Issue
 # Wierd behaviour when assigning colors to data with NA's
 
+# I'm building a shiny app for data on all polls made in Sweden from 1998-2017. 
+
+# Here's the data
+
 get_polls <- function(){
   # Get URL
   x <- RCurl::getURL("https://raw.githubusercontent.com/MansMeg/SwedishPolls/master/Data/Polls.csv")
@@ -16,11 +20,14 @@ get_polls <- function(){
   dplyr::as_data_frame(df)
 }
 
+# So basically you will be able to chose which house that has carried out the poll and what party you are interested in.
+
 polls <- get_polls() %>%
   select(PublYearMonth, M:FI, house) %>%
   gather("parti", value = procent, -PublYearMonth, -house)
 
-# Create data frame with party colors in order to join with data
+# Each party has a official colour that needs to be consistent for different inputs
+# So I create a data frame with party colors in order to join with data
 partycolors <- data.frame(parti = levels(as.factor(polls$parti)) ,
                           color = as.factor(c("#009933", "#CD1B68", "#000077",
                                               "#006AB3", "#52BDEC", "#83CF39",
@@ -29,7 +36,7 @@ partycolors <- data.frame(parti = levels(as.factor(polls$parti)) ,
 # Join data
 polls <- full_join(polls, partycolors, by = c("parti"))
 
-# Plot data
+# When I plot the data the last party, FI, gets the color of SD. 
 polls %>%
   filter(house == "Demoskop") %>%
   plot_ly(x = ~PublYearMonth,
@@ -41,11 +48,11 @@ polls %>%
           mode = "markers",
           marker = list(color = ~color))
 
-# Filter out NA
+# However, when I filter out NA's (both SD and FI are reletively new parties)
 polls <- polls %>%
   filter(!is.na(procent))
 
-# Plot data
+# The colors are correct.
 polls %>%
   filter(house == "Demoskop") %>%
   plot_ly(x = ~PublYearMonth,
@@ -56,3 +63,5 @@ polls %>%
           hoverinfo = 'text',
           mode = "markers",
           marker = list(color = ~color))
+
+# Any idea why? 

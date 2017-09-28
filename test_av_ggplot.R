@@ -26,7 +26,7 @@ ggplotly(plot, tooltip = c("PublYearMonth", "parti", "procent", "Company"))
                           procent, '<br>Institut:', house,
                           "<br>Datum:", PublYearMonth),
             hoverinfo = "text", 
-            opacity = c(1),
+            opacity = c(0.8),
             mode = "markers",
             marker = list(color = ~color)) %>%
     layout(
@@ -38,8 +38,26 @@ ggplotly(plot, tooltip = c("PublYearMonth", "parti", "procent", "Company"))
       titlefont = list(size = 18, family = "Gill Sans MT"),
       showlegend = F)
   
-  
-  myColors <- brewer.pal(5,"Set1")
-  
-  library(RColorBrewer)
+ #Test line plot 
+  polls %>%
+    filter(house == "Demoskop") %>%
+    plot_ly(x = ~PublYearMonth,
+            y = ~procent,
+            text = ~paste('Parti:', parti, '<br>Procent:',
+                          procent, '<br>Institut:', house,
+                          "<br>Datum:", PublYearMonth),
+            hoverinfo = "text", 
+            opacity = c(0.8),
+            mode = "lines",
+            color = ~parti,
+            line = list(color = ~color)) %>%
+    layout(
+      plot_bgcolor = "rgb(250,250,250)",
+      font = list(family = "Gill Sans MT"),
+      xaxis = list(title = "", range = c("1998-01-01", "2017-09-01")),
+      yaxis = list(title = "", range = c(0, 50)),
+      title = c("Svensk opinion över tid"),
+      titlefont = list(size = 18, family = "Gill Sans MT"),
+      showlegend = F) %>%
+    add_trace(color = ~parti)
   
